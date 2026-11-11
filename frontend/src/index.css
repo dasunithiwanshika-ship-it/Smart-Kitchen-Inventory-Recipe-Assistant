@@ -2,68 +2,87 @@
 
 @layer base {
   :root {
-    --font-sans: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --page: #e9e7df;
+    --ink: #16193a;
+    --navy: #141a4a;
+    --white: #ffffff;
+    --card: #f7d23a;
+    --royal: #3a49c9;
+    --gap: 1.19vw;
+    --ease: cubic-bezier(.2, .8, .2, 1);
+    --font-sans: "Jost", "Futura", "Century Gothic", Arial, sans-serif;
+  }
+
+  html {
+    background-color: var(--page);
   }
 
   body {
     font-family: var(--font-sans);
-    background-color: #0b0f19;
-    color: #f1f5f9;
+    background-color: var(--page);
+    color: var(--ink);
     min-height: 100vh;
     overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
   }
 }
 
-/* Custom modern scrollbars */
+/* Left-to-right animated underline matching olla navigation */
+.olla-link {
+  position: relative;
+}
+.olla-link::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -3px;
+  height: 1.5px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.35s var(--ease);
+}
+.olla-link:hover::after,
+.olla-link.is-active::after {
+  transform: scaleX(1);
+}
+
+/* Clip-path wipe drawer */
+.olla-drop {
+  clip-path: inset(0 0 100% 0 round 10px);
+  transition: clip-path 0.45s var(--ease);
+}
+.olla-drop.is-open {
+  clip-path: inset(0 0 0 0 round 10px);
+}
+
+/* Custom clean scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.6);
+  background: #dfddd3;
+  border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(100, 116, 139, 0.4);
+  background: #b8b4a6;
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(148, 163, 184, 0.6);
+  background: #8d897c;
 }
 
-/* Glassmorphism helpers */
-.glass-panel {
-  background: rgba(17, 24, 39, 0.75);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.glass-card {
-  background: rgba(30, 41, 59, 0.6);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-}
-
-.glass-card-hover {
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.glass-card-hover:hover {
-  transform: translateY(-2px);
-  border-color: rgba(52, 211, 153, 0.3);
-  box-shadow: 0 12px 30px -10px rgba(16, 185, 129, 0.15);
-}
-
-/* Pulse glow for urgent items */
-@keyframes pulse-glow {
+@keyframes softPulse {
   0%, 100% {
-    box-shadow: 0 0 15px rgba(239, 68, 68, 0.3);
+    opacity: 1;
   }
   50% {
-    box-shadow: 0 0 25px rgba(239, 68, 68, 0.6);
+    opacity: 0.5;
   }
 }
 
-.urgent-glow {
-  animation: pulse-glow 2s infinite ease-in-out;
+.critical-pulse {
+  animation: softPulse 1.8s infinite;
 }

@@ -1,5 +1,5 @@
 import React from 'react';
-import { ScanLine, Plus, UtensilsCrossed, ChefHat, Sparkles } from 'lucide-react';
+import { Camera, Plus, UtensilsCrossed, ChefHat } from 'lucide-react';
 
 interface QuickActionsProps {
   onScanBarcode: () => void;
@@ -16,60 +16,56 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
 }) => {
   const actions = [
     {
-      title: 'Scan Barcode',
-      subtitle: 'Instant camera recognition',
-      icon: ScanLine,
-      color: 'from-emerald-500 to-teal-500',
-      shadow: 'shadow-emerald-500/20',
+      title: 'Scan Packaging',
+      subtitle: 'Read MFD & EXP dates with camera',
+      icon: Camera,
+      iconBg: 'bg-[#141a4a] text-white group-hover:bg-[#3a49c9]',
       onClick: onScanBarcode,
-      primary: true
     },
     {
-      title: 'Add Food Item',
-      subtitle: 'Manual entry (< 10 sec)',
+      title: 'Add Groceries',
+      subtitle: 'Quick entry for fresh produce',
       icon: Plus,
-      color: 'from-blue-600 to-indigo-600',
-      shadow: 'shadow-blue-500/20',
+      iconBg: 'bg-[#f7d23a] text-[#141a4a]',
       onClick: onAddFood,
     },
     {
       title: 'Log Leftover',
-      subtitle: 'Track cooked meals',
+      subtitle: 'Track cooked meals & use-by date',
       icon: UtensilsCrossed,
-      color: 'from-amber-600 to-orange-600',
-      shadow: 'shadow-amber-500/20',
+      iconBg: 'bg-[#e9e7df] text-[#141a4a]',
       onClick: onAddLeftover,
     },
     {
-      title: 'AI Recipe Engine',
-      subtitle: 'Zero-waste meal ideas',
+      title: 'AI Recipes',
+      subtitle: 'Meals matched to your stock',
       icon: ChefHat,
-      color: 'from-purple-600 to-pink-600',
-      shadow: 'shadow-purple-500/20',
+      iconBg: 'bg-[#e9e7df] text-[#141a4a]',
       onClick: onViewRecipes,
     },
   ];
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-[1.19vw]">
       {actions.map((act, i) => {
         const Icon = act.icon;
         return (
           <button
             key={i}
+            type="button"
             onClick={act.onClick}
-            className={`glass-card p-4 rounded-2xl flex items-center gap-3.5 text-left group hover:-translate-y-0.5 transition-all duration-200 border border-white/5 hover:border-slate-700 cursor-pointer`}
+            className="group bg-white rounded-[14px] border border-transparent hover:border-[#141a4a]/25 p-4 flex items-center gap-3.5 text-left transition-colors duration-200 cursor-pointer"
           >
             <div
-              className={`w-11 h-11 rounded-xl bg-gradient-to-tr ${act.color} flex items-center justify-center text-white shadow-lg ${act.shadow} shrink-0 group-hover:scale-105 transition-transform`}
+              className={`w-11 h-11 rounded-xl ${act.iconBg} flex items-center justify-center shrink-0 transition-colors`}
             >
-              <Icon className="w-5 h-5" />
+              <Icon className="w-5 h-5 stroke-[1.75]" />
             </div>
             <div className="overflow-hidden">
-              <h4 className="text-sm font-bold text-slate-100 group-hover:text-emerald-400 transition-colors truncate">
+              <h4 className="text-sm font-semibold text-[#16193a] truncate">
                 {act.title}
               </h4>
-              <p className="text-[11px] text-slate-400 truncate">{act.subtitle}</p>
+              <p className="text-[11px] text-[#16193a]/55 truncate">{act.subtitle}</p>
             </div>
           </button>
         );

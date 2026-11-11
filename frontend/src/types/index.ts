@@ -121,6 +121,22 @@ export interface RecipeRecommendation extends Recipe {
   recommendation_reason: string;
 }
 
+export interface CookedIngredientResult {
+  inventory_item_id: number;
+  food_name: string;
+  deducted_quantity: number;
+  remaining_quantity: number;
+  unit: string;
+  fully_consumed: boolean;
+}
+
+export interface CookRecipeResponse {
+  recipe_id: number;
+  recipe_title: string;
+  consumed_items: CookedIngredientResult[];
+  message: string;
+}
+
 export interface BarcodeLookup {
   found: boolean;
   barcode: string;

@@ -1,14 +1,48 @@
-from datetime import date, datetime, timedelta
 from sqlalchemy.orm import Session
 from app.models.models import (
     Base, User, Category, StorageLocation, FoodItem,
-    InventoryItem, Leftover, Recipe, RecipeIngredient,
-    ConsumptionHistory, ItemStatus
+    Recipe, RecipeIngredient,
 )
-from app.services.auth_service import get_password_hash
 from app.database.session import engine
 
+# Legacy demo account that older versions of the app auto-created with fake data.
+LEGACY_DEMO_EMAIL = "chef@smartkitchen.ai"
+
+
+def purge_legacy_demo_data(db: Session) -> None:
+    """Remove fake demo data created by earlier versions of the app.
+
+    Older builds seeded a demo account ("Master Chef Alex") with invented
+    inventory, leftovers and consumption history, plus a food catalog with
+    made-up barcodes. This app is for real household use, so that data is
+    deleted. Real user accounts are never touched.
+    """
+    demo_user = db.query(User).filter(User.email == LEGACY_DEMO_EMAIL).first()
+    if demo_user:
+        # ORM delete cascades to inventory, leftovers, history and notifications
+        db.delete(demo_user)
+
+    fake_catalog = db.query(FoodItem).filter(FoodItem.barcode.like("0123456789%")).all()
+    if fake_catalog:
+        fake_ids = [f.id for f in fake_catalog]
+        db.query(RecipeIngredient).filter(RecipeIngredient.food_item_id.in_(fake_ids)).update(
+            {RecipeIngredient.food_item_id: None}, synchronize_session=False
+        )
+        for f in fake_catalog:
+            db.delete(f)
+
+    db.commit()
+
+
 def seed_database(db: Session):
+    """Seed reference data only (categories, storage locations, recipe catalog).
+
+    No products, inventory, leftovers, users or history are created here:
+    all of that must come from real user input.
+    """
+    # Purge any legacy fake demo accounts or products
+    purge_legacy_demo_data(db)
+
     # Create tables if not exist
     Base.metadata.create_all(bind=engine)
 
@@ -50,174 +84,8 @@ def seed_database(db: Session):
             st = StorageLocation(**st_data)
             db.add(st)
 
-    # 3. Standard Food Catalog Items with Barcodes
-    food_catalog_data = [
-        {"name": "Chicken Breast", "category": "Meat", "barcode": "012345678901", "unit": "g", "shelf_life": 3, "image_url": "https://images.unsplash.com/photo-1604503468506-a8da13d82791?w=500&auto=format&fit=crop", "calories": 165},
-        {"name": "Fresh Tomato", "category": "Vegetables", "barcode": "012345678902", "unit": "pieces", "shelf_life": 5, "image_url": "https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=500&auto=format&fit=crop", "calories": 18},
-        {"name": "Potato", "category": "Vegetables", "barcode": "012345678903", "unit": "kg", "shelf_life": 14, "image_url": "https://images.unsplash.com/photo-1518977676601-b53f82aba655?w=500&auto=format&fit=crop", "calories": 77},
-        {"name": "Basmati Rice", "category": "Grains", "barcode": "012345678904", "unit": "kg", "shelf_life": 180, "image_url": "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=500&auto=format&fit=crop", "calories": 130},
-        {"name": "Whole Milk", "category": "Dairy", "barcode": "012345678905", "unit": "L", "shelf_life": 7, "image_url": "https://images.unsplash.com/photo-1550583724-b2692b85b150?w=500&auto=format&fit=crop", "calories": 62},
-        {"name": "Farm Fresh Eggs", "category": "Dairy", "barcode": "012345678906", "unit": "pieces", "shelf_life": 21, "image_url": "https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?w=500&auto=format&fit=crop", "calories": 74},
-        {"name": "Yellow Onion", "category": "Vegetables", "barcode": "012345678907", "unit": "pieces", "shelf_life": 30, "image_url": "https://images.unsplash.com/photo-1618512496248-a07fe83aa8cb?w=500&auto=format&fit=crop", "calories": 40},
-        {"name": "Garlic Bulb", "category": "Vegetables", "barcode": "012345678908", "unit": "pieces", "shelf_life": 45, "image_url": "https://images.unsplash.com/photo-1540148426945-6cf22a6b2383?w=500&auto=format&fit=crop", "calories": 149},
-        {"name": "Olive Oil", "category": "Spices", "barcode": "012345678909", "unit": "ml", "shelf_life": 365, "image_url": "https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=500&auto=format&fit=crop", "calories": 884},
-        {"name": "Cheddar Cheese", "category": "Dairy", "barcode": "012345678910", "unit": "g", "shelf_life": 20, "image_url": "https://images.unsplash.com/photo-1618164436241-4473940d1f5c?w=500&auto=format&fit=crop", "calories": 402},
-        {"name": "Broccoli", "category": "Vegetables", "barcode": "012345678911", "unit": "g", "shelf_life": 6, "image_url": "https://images.unsplash.com/photo-1584270354949-c26b0d5b4a0c?w=500&auto=format&fit=crop", "calories": 34},
-        {"name": "Salmon Fillet", "category": "Seafood", "barcode": "012345678912", "unit": "g", "shelf_life": 2, "image_url": "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=500&auto=format&fit=crop", "calories": 208},
-        {"name": "Fresh Spinach", "category": "Vegetables", "barcode": "012345678913", "unit": "g", "shelf_life": 4, "image_url": "https://images.unsplash.com/photo-1576045057995-568f588f82fb?w=500&auto=format&fit=crop", "calories": 23},
-        {"name": "Pasta Spaghetti", "category": "Grains", "barcode": "012345678914", "unit": "g", "shelf_life": 365, "image_url": "https://images.unsplash.com/photo-1551462147-ff29053bfc14?w=500&auto=format&fit=crop", "calories": 131},
-        {"name": "Ripe Bananas", "category": "Fruits", "barcode": "012345678915", "unit": "pieces", "shelf_life": 5, "image_url": "https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e?w=500&auto=format&fit=crop", "calories": 89},
-        {"name": "Butter", "category": "Dairy", "barcode": "012345678916", "unit": "g", "shelf_life": 30, "image_url": "https://images.unsplash.com/photo-1589985270826-4b7bb135bc9d?w=500&auto=format&fit=crop", "calories": 717},
-        {"name": "Fresh Mushrooms", "category": "Vegetables", "barcode": "012345678917", "unit": "g", "shelf_life": 5, "image_url": "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=500&auto=format&fit=crop", "calories": 22},
-        {"name": "Ground Beef", "category": "Meat", "barcode": "012345678918", "unit": "g", "shelf_life": 3, "image_url": "https://images.unsplash.com/photo-1588168333986-5078d3ae3976?w=500&auto=format&fit=crop", "calories": 250},
-        {"name": "Curry Powder", "category": "Spices", "barcode": "012345678919", "unit": "g", "shelf_life": 365, "image_url": "https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=500&auto=format&fit=crop", "calories": 325},
-        {"name": "Soy Sauce", "category": "Spices", "barcode": "012345678920", "unit": "ml", "shelf_life": 365, "image_url": "https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43?w=500&auto=format&fit=crop", "calories": 53},
-        {"name": "Lemon", "category": "Fruits", "barcode": "012345678921", "unit": "pieces", "shelf_life": 14, "image_url": "https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?w=500&auto=format&fit=crop", "calories": 29},
-        {"name": "Avocado", "category": "Fruits", "barcode": "012345678922", "unit": "pieces", "shelf_life": 4, "image_url": "https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?w=500&auto=format&fit=crop", "calories": 160},
-        {"name": "Sourdough Bread", "category": "Bakery", "barcode": "012345678923", "unit": "pieces", "shelf_life": 4, "image_url": "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=500&auto=format&fit=crop", "calories": 260},
-        {"name": "Greek Yogurt", "category": "Dairy", "barcode": "012345678924", "unit": "g", "shelf_life": 10, "image_url": "https://images.unsplash.com/photo-1488477181946-6428a0291777?w=500&auto=format&fit=crop", "calories": 59},
-        {"name": "Fresh Strawberries", "category": "Fruits", "barcode": "012345678925", "unit": "g", "shelf_life": 3, "image_url": "https://images.unsplash.com/photo-1464965911861-746a04b4bca6?w=500&auto=format&fit=crop", "calories": 32},
-    ]
 
-    food_map = {}
-    for f_data in food_catalog_data:
-        food = db.query(FoodItem).filter(FoodItem.name == f_data["name"]).first()
-        if not food:
-            food = FoodItem(
-                name=f_data["name"],
-                category_id=cat_map.get(f_data["category"]),
-                barcode=f_data["barcode"],
-                default_unit=f_data["unit"],
-                typical_shelf_life_days=f_data["shelf_life"],
-                image_url=f_data["image_url"],
-                calories_per_100g=f_data.get("calories")
-            )
-            db.add(food)
-            db.flush()
-        food_map[food.name] = food.id
-
-    # 4. Demo User
-    demo_user = db.query(User).filter(User.email == "chef@smartkitchen.ai").first()
-    if not demo_user:
-        demo_user = User(
-            email="chef@smartkitchen.ai",
-            hashed_password=get_password_hash("password123"),
-            full_name="Master Chef Alex",
-            notifications_enabled=True,
-            notification_days_before_expiry=3
-        )
-        db.add(demo_user)
-        db.flush()
-
-    today = date.today()
-
-    # 5. User Inventory Items with Realistic Dates & Statuses
-    inventory_data = [
-        # Expiring very soon / Critical (0-1 days)
-        {"food_name": "Fresh Tomato", "cat": "Vegetables", "qty": 4, "unit": "pieces", "loc": "Refrigerator", "p_offset": -4, "e_offset": 1, "notes": "Ripe vine tomatoes, use soon"},
-        {"food_name": "Chicken Breast", "cat": "Meat", "qty": 500, "unit": "g", "loc": "Refrigerator", "p_offset": -2, "e_offset": 1, "notes": "Fresh organic chicken fillets"},
-        {"food_name": "Fresh Strawberries", "cat": "Fruits", "qty": 250, "unit": "g", "loc": "Refrigerator", "p_offset": -3, "e_offset": 1, "notes": "Sweet local berries"},
-        {"food_name": "Avocado", "cat": "Fruits", "qty": 2, "unit": "pieces", "loc": "Pantry", "p_offset": -3, "e_offset": 1, "notes": "Soft and perfectly ripe"},
-        
-        # Expiring Soon (2-3 days)
-        {"food_name": "Whole Milk", "cat": "Dairy", "qty": 1.5, "unit": "L", "loc": "Refrigerator", "p_offset": -5, "e_offset": 2, "notes": "Open gallon"},
-        {"food_name": "Fresh Spinach", "cat": "Vegetables", "qty": 200, "unit": "g", "loc": "Refrigerator", "p_offset": -2, "e_offset": 2, "notes": "Crispy baby spinach"},
-        {"food_name": "Fresh Mushrooms", "cat": "Vegetables", "qty": 300, "unit": "g", "loc": "Refrigerator", "p_offset": -3, "e_offset": 2, "notes": "Button mushrooms for sauté"},
-        {"food_name": "Sourdough Bread", "cat": "Bakery", "qty": 1, "unit": "pieces", "loc": "Pantry", "p_offset": -2, "e_offset": 2, "notes": "Artisan loaf"},
-        {"food_name": "Salmon Fillet", "cat": "Seafood", "qty": 400, "unit": "g", "loc": "Refrigerator", "p_offset": -1, "e_offset": 2, "notes": "Atlantic salmon"},
-        
-        # Fresh (4+ days)
-        {"food_name": "Potato", "cat": "Vegetables", "qty": 2, "unit": "kg", "loc": "Pantry", "p_offset": -3, "e_offset": 8, "notes": "Russet baking potatoes"},
-        {"food_name": "Yellow Onion", "cat": "Vegetables", "qty": 6, "unit": "pieces", "loc": "Pantry", "p_offset": -5, "e_offset": 18, "notes": "Sweet yellow onions"},
-        {"food_name": "Garlic Bulb", "cat": "Vegetables", "qty": 3, "unit": "pieces", "loc": "Pantry", "p_offset": -7, "e_offset": 25, "notes": "Fresh garlic"},
-        {"food_name": "Farm Fresh Eggs", "cat": "Dairy", "qty": 12, "unit": "pieces", "loc": "Refrigerator", "p_offset": -2, "e_offset": 14, "notes": "Free range large eggs"},
-        {"food_name": "Cheddar Cheese", "cat": "Dairy", "qty": 250, "unit": "g", "loc": "Refrigerator", "p_offset": -4, "e_offset": 16, "notes": "Aged cheddar block"},
-        {"food_name": "Butter", "cat": "Dairy", "qty": 200, "unit": "g", "loc": "Refrigerator", "p_offset": -5, "e_offset": 22, "notes": "Unsalted European butter"},
-        {"food_name": "Basmati Rice", "cat": "Grains", "qty": 3, "unit": "kg", "loc": "Pantry", "p_offset": -10, "e_offset": 90, "notes": "Long grain aromatic rice"},
-        {"food_name": "Pasta Spaghetti", "cat": "Grains", "qty": 500, "unit": "g", "loc": "Pantry", "p_offset": -14, "e_offset": 120, "notes": "Italian durum wheat pasta"},
-        {"food_name": "Olive Oil", "cat": "Spices", "qty": 750, "unit": "ml", "loc": "Pantry", "p_offset": -20, "e_offset": 180, "notes": "Extra virgin olive oil"},
-        {"food_name": "Soy Sauce", "cat": "Spices", "qty": 300, "unit": "ml", "loc": "Pantry", "p_offset": -30, "e_offset": 200, "notes": "Premium brewed soy sauce"},
-        {"food_name": "Curry Powder", "cat": "Spices", "qty": 100, "unit": "g", "loc": "Pantry", "p_offset": -15, "e_offset": 150, "notes": "Aromatic curry blend"},
-        {"food_name": "Greek Yogurt", "cat": "Dairy", "qty": 500, "unit": "g", "loc": "Refrigerator", "p_offset": -2, "e_offset": 7, "notes": "Plain authentic Greek yogurt"},
-        {"food_name": "Ground Beef", "cat": "Meat", "qty": 600, "unit": "g", "loc": "Freezer", "p_offset": -5, "e_offset": 60, "notes": "85% lean ground beef"},
-        {"food_name": "Broccoli", "cat": "Vegetables", "qty": 350, "unit": "g", "loc": "Refrigerator", "p_offset": -1, "e_offset": 5, "notes": "Fresh green florets"},
-    ]
-
-    for inv in inventory_data:
-        existing = db.query(InventoryItem).filter(
-            InventoryItem.user_id == demo_user.id,
-            InventoryItem.food_name == inv["food_name"]
-        ).first()
-
-        p_date = today + timedelta(days=inv["p_offset"])
-        e_date = today + timedelta(days=inv["e_offset"])
-        status = "Fresh"
-        if inv["e_offset"] < 0:
-            status = "Expired"
-        elif inv["e_offset"] <= 1:
-            status = "Critical"
-        elif inv["e_offset"] <= 3:
-            status = "Expiring Soon"
-
-        if not existing:
-            cat_id = cat_map.get(inv["cat"])
-            f_item_id = food_map.get(inv["food_name"])
-            db_item = InventoryItem(
-                user_id=demo_user.id,
-                food_name=inv["food_name"],
-                category_id=cat_id,
-                food_item_id=f_item_id,
-                quantity=inv["qty"],
-                unit=inv["unit"],
-                storage_location=inv["loc"],
-                purchase_date=p_date,
-                expiry_date=e_date,
-                notes=inv["notes"],
-                status=status,
-                image_url=food_catalog_data[0]["image_url"] if not f_item_id else None
-            )
-            db.add(db_item)
-
-    # 6. Leftovers
-    leftovers_sample = [
-        {
-            "name": "Chicken Curry",
-            "quantity": 450,
-            "unit": "g",
-            "prep_offset": 0,
-            "use_before_offset": 1,
-            "storage": "Refrigerator",
-            "notes": "Delicious spiced chicken curry with gravy"
-        },
-        {
-            "name": "Vegetable Fried Rice",
-            "quantity": 300,
-            "unit": "g",
-            "prep_offset": -1,
-            "use_before_offset": 2,
-            "storage": "Refrigerator",
-            "notes": "Jasmine rice with peas and carrots"
-        }
-    ]
-    for left in leftovers_sample:
-        existing_left = db.query(Leftover).filter(
-            Leftover.user_id == demo_user.id,
-            Leftover.name == left["name"]
-        ).first()
-        if not existing_left:
-            lo = Leftover(
-                user_id=demo_user.id,
-                name=left["name"],
-                quantity=left["quantity"],
-                unit=left["unit"],
-                prepared_date=today + timedelta(days=left["prep_offset"]),
-                use_before_date=today + timedelta(days=left["use_before_offset"]),
-                storage_location=left["storage"],
-                notes=left["notes"]
-            )
-            db.add(lo)
-
-    # 7. Rich Recipe Database (20+ Recipes)
+    # 3. Recipe catalog (reference data used for suggestions)
     recipes_data = [
         {
             "title": "Chicken Tomato Curry",
@@ -515,7 +383,7 @@ def seed_database(db: Session):
             db.flush()
 
             for ing_data in r_data["ingredients"]:
-                f_id = food_map.get(ing_data["name"])
+                f_id = None  # no product catalog; matched by name
                 r_ing = RecipeIngredient(
                     recipe_id=recipe.id,
                     food_item_id=f_id,
@@ -526,31 +394,5 @@ def seed_database(db: Session):
                 )
                 db.add(r_ing)
 
-    # 8. Sample Consumption and Waste History for Realistic Analytics
-    sample_history = [
-        {"food": "Fresh Tomato", "cat": "Vegetables", "qty": 3, "unit": "pieces", "action": "consumed", "days_ago": 1},
-        {"food": "Whole Milk", "cat": "Dairy", "qty": 0.5, "unit": "L", "action": "consumed", "days_ago": 2},
-        {"food": "Chicken Breast", "cat": "Meat", "qty": 400, "unit": "g", "action": "consumed", "days_ago": 3},
-        {"food": "Potato", "cat": "Vegetables", "qty": 500, "unit": "g", "action": "consumed", "days_ago": 4},
-        {"food": "Fresh Spinach", "cat": "Vegetables", "qty": 100, "unit": "g", "action": "expired", "days_ago": 5, "reason": "expired"},
-        {"food": "Sourdough Bread", "cat": "Bakery", "qty": 0.5, "unit": "pieces", "action": "wasted", "days_ago": 7, "reason": "stale"},
-        {"food": "Yellow Onion", "cat": "Vegetables", "qty": 2, "unit": "pieces", "action": "consumed", "days_ago": 8},
-        {"food": "Pasta Spaghetti", "cat": "Grains", "qty": 250, "unit": "g", "action": "consumed", "days_ago": 10},
-    ]
-
-    for h in sample_history:
-        h_date = datetime.utcnow() - timedelta(days=h["days_ago"])
-        hist = ConsumptionHistory(
-            user_id=demo_user.id,
-            food_name=h["food"],
-            category_name=h["cat"],
-            quantity=h["qty"],
-            unit=h["unit"],
-            action=h["action"],
-            waste_reason=h.get("reason"),
-            recorded_at=h_date
-        )
-        db.add(hist)
 
     db.commit()
-    print("Database successfully seeded with realistic Smart Kitchen data!")

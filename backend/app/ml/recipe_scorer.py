@@ -21,7 +21,7 @@ class RecipeScorer:
             if item.quantity <= 0:
                 continue
             name_key = item.food_name.strip().lower()
-            days_left = (item.expiry_date - today).days
+            days_left = (item.expiry_date - today).days if item.expiry_date else 999
             inv_map[name_key] = {
                 "days_left": days_left,
                 "item": item

@@ -6,7 +6,7 @@ import {
   Refrigerator,
   Snowflake,
   Archive,
-  ArrowUpRight
+  ArrowUpRight,
 } from 'lucide-react';
 import { InventoryStats } from '../../types';
 
@@ -20,95 +20,94 @@ export const StatsCards: React.FC<StatsCardsProps> = ({ stats, onFilterClick }) 
 
   const cards = [
     {
-      label: 'Total Food Items',
+      label: 'Total Items',
       value: stats?.total_items || 0,
-      subValue: `${stats?.total_quantity || 0} total units`,
+      subValue: `${stats?.total_quantity || 0} units tracked`,
       icon: Boxes,
-      color: 'from-emerald-500/20 to-teal-500/5',
-      textColor: 'text-emerald-400',
-      borderColor: 'border-emerald-500/20',
-      onClick: () => onFilterClick('All', 'All')
+      iconBg: 'bg-[#e9e7df] text-[#141a4a]',
+      accent: 'text-[#141a4a]',
+      onClick: () => onFilterClick('All', 'All'),
     },
     {
-      label: 'Expiring Soon',
+      label: 'Use Soon',
       value: expiringCount,
-      subValue: stats?.critical_items ? `${stats.critical_items} critical (0-1d)` : 'Within 3 days',
+      subValue: stats?.critical_items ? `${stats.critical_items} critical (0–1d)` : 'Next 3 days',
       icon: AlertTriangle,
-      color: 'from-amber-500/20 to-orange-500/5',
-      textColor: 'text-amber-400',
-      borderColor: 'border-amber-500/30',
-      badge: expiringCount > 0 ? 'Urgent' : undefined,
-      onClick: () => onFilterClick('All', 'Expiring Soon')
+      iconBg: expiringCount > 0 ? 'bg-[#f7d23a] text-[#141a4a]' : 'bg-[#e9e7df] text-[#141a4a]',
+      accent: expiringCount > 0 ? 'text-amber-700' : 'text-[#141a4a]',
+      badge: expiringCount > 0 ? 'Priority' : undefined,
+      onClick: () => onFilterClick('All', 'Expiring Soon'),
     },
     {
-      label: 'Expired Items',
+      label: 'Expired',
       value: stats?.expired_items || 0,
-      subValue: stats?.expired_items ? 'Action needed' : 'Zero waste!',
+      subValue: stats?.expired_items ? 'Needs cleanup' : 'Zero waste!',
       icon: Flame,
-      color: 'from-rose-500/20 to-red-500/5',
-      textColor: 'text-rose-400',
-      borderColor: 'border-rose-500/20',
-      onClick: () => onFilterClick('All', 'Expired')
+      iconBg: stats?.expired_items ? 'bg-rose-100 text-rose-700' : 'bg-[#e9e7df] text-[#141a4a]',
+      accent: stats?.expired_items ? 'text-rose-600' : 'text-[#141a4a]',
+      onClick: () => onFilterClick('All', 'Expired'),
     },
     {
       label: 'Refrigerator',
       value: stats?.refrigerator_items || 0,
-      subValue: 'Chilled produce & dairy',
+      subValue: 'Chilled stock',
       icon: Refrigerator,
-      color: 'from-blue-500/20 to-cyan-500/5',
-      textColor: 'text-cyan-400',
-      borderColor: 'border-cyan-500/20',
-      onClick: () => onFilterClick('Refrigerator')
+      iconBg: 'bg-[#e9e7df] text-[#141a4a]',
+      accent: 'text-[#141a4a]',
+      onClick: () => onFilterClick('Refrigerator'),
     },
     {
       label: 'Freezer',
       value: stats?.freezer_items || 0,
-      subValue: 'Frozen meats & stock',
+      subValue: 'Frozen stock',
       icon: Snowflake,
-      color: 'from-indigo-500/20 to-purple-500/5',
-      textColor: 'text-indigo-400',
-      borderColor: 'border-indigo-500/20',
-      onClick: () => onFilterClick('Freezer')
+      iconBg: 'bg-[#e9e7df] text-[#141a4a]',
+      accent: 'text-[#141a4a]',
+      onClick: () => onFilterClick('Freezer'),
     },
     {
       label: 'Pantry',
       value: stats?.pantry_items || 0,
-      subValue: 'Dry goods & spices',
+      subValue: 'Dry & spices',
       icon: Archive,
-      color: 'from-purple-500/20 to-pink-500/5',
-      textColor: 'text-purple-400',
-      borderColor: 'border-purple-500/20',
-      onClick: () => onFilterClick('Pantry')
+      iconBg: 'bg-[#e9e7df] text-[#141a4a]',
+      accent: 'text-[#141a4a]',
+      onClick: () => onFilterClick('Pantry'),
     },
   ];
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-[1.19vw]">
       {cards.map((card, idx) => {
         const Icon = card.icon;
         return (
           <button
             key={idx}
+            type="button"
             onClick={card.onClick}
-            className={`glass-card p-3.5 rounded-2xl border ${card.borderColor} bg-gradient-to-br ${card.color} text-left flex flex-col justify-between group transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg cursor-pointer`}
+            className="bg-white rounded-[14px] border border-transparent hover:border-[#3a49c9]/35 p-4 text-left flex flex-col justify-between group transition-colors duration-200 cursor-pointer"
           >
-            <div className="flex items-center justify-between w-full mb-2">
-              <div className={`p-2 rounded-xl bg-slate-900/60 ${card.textColor} border border-white/5`}>
-                <Icon className="w-4 h-4" />
+            <div className="flex items-center justify-between w-full mb-3">
+              <div className={`p-2 rounded-xl ${card.iconBg} transition-colors`}>
+                <Icon className="w-4 h-4 stroke-[1.75]" />
               </div>
               {card.badge ? (
-                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 animate-pulse">
+                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#f7d23a] text-[#141a4a]">
                   {card.badge}
                 </span>
               ) : (
-                <ArrowUpRight className="w-3.5 h-3.5 text-slate-500 group-hover:text-slate-300 transition-colors opacity-0 group-hover:opacity-100" />
+                <ArrowUpRight className="w-3.5 h-3.5 text-[#16193a]/25 group-hover:text-[#3a49c9] transition-colors" />
               )}
             </div>
 
             <div>
-              <span className="text-2xl font-extrabold text-white tracking-tight">{card.value}</span>
-              <p className="text-xs font-semibold text-slate-300 truncate">{card.label}</p>
-              <p className="text-[10px] text-slate-400 truncate mt-0.5">{card.subValue}</p>
+              <span className={`text-2xl font-semibold ${card.accent} tracking-tight`}>
+                {card.value}
+              </span>
+              <p className="text-xs font-semibold text-[#16193a] truncate mt-0.5">
+                {card.label}
+              </p>
+              <p className="text-[11px] text-[#16193a]/55 truncate mt-0.5">{card.subValue}</p>
             </div>
           </button>
         );

@@ -34,13 +34,16 @@ class AIService:
         fresh_items = []
 
         for it in active_items:
-            days = (it.expiry_date - today).days
-            if days <= 1:
-                critical_items.append((it, days))
-            elif days <= 3:
-                expiring_soon_items.append((it, days))
+            if it.expiry_date:
+                days = (it.expiry_date - today).days
+                if days <= 1:
+                    critical_items.append((it, days))
+                elif days <= 3:
+                    expiring_soon_items.append((it, days))
+                else:
+                    fresh_items.append((it, days))
             else:
-                fresh_items.append((it, days))
+                fresh_items.append((it, 999))
 
         # Check if external LLM configured (OpenAI or Gemini)
         if settings.AI_PROVIDER == "openai" and settings.OPENAI_API_KEY:

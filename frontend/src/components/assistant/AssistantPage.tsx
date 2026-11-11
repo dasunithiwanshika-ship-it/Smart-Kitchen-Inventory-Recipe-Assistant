@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Bot, Send, Sparkles, AlertCircle, ChefHat, CheckCircle2, User, RefreshCw } from 'lucide-react';
+import { Bot, Send, Sparkles, ChefHat, User, RefreshCw } from 'lucide-react';
 import { api } from '../../services/api';
 import { AssistantMessage } from '../../types';
 
@@ -12,7 +12,7 @@ export const AssistantPage: React.FC<AssistantPageProps> = ({ onSelectRecipeTitl
     {
       role: 'assistant',
       content:
-        'Hello Chef! 👋 I am your **Smart Kitchen Assistant**.\n\nI have direct access to your real live inventory and expiry dates. Ask me what to cook, what is spoiling soon, or how to use up your leftovers without food waste!',
+        'Hello Chef! 👋 I am your **Smart Kitchen Copilot**.\n\nI am connected to your live kitchen inventory and expiry dates. Ask me what to cook, what ingredients are expiring soon, or how to use up your leftovers!',
       suggested_actions: [
         'What can I cook today?',
         'What is going to expire soon?',
@@ -66,7 +66,7 @@ export const AssistantPage: React.FC<AssistantPageProps> = ({ onSelectRecipeTitl
         ...prev,
         {
           role: 'assistant',
-          content: 'Sorry, I encountered an issue checking your kitchen inventory. Please try again in a moment.',
+          content: 'Sorry, I encountered an issue checking your kitchen inventory. Please try again.',
         },
       ]);
     } finally {
@@ -75,21 +75,21 @@ export const AssistantPage: React.FC<AssistantPageProps> = ({ onSelectRecipeTitl
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-140px)] md:h-[calc(100vh-110px)] glass-panel rounded-3xl border border-slate-800 overflow-hidden">
+    <div className="flex flex-col h-[calc(100vh-140px)] md:h-[calc(100vh-110px)] bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
       {/* Header */}
-      <div className="p-4 bg-slate-900/80 border-b border-slate-800 flex items-center justify-between shrink-0">
+      <div className="p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-500 flex items-center justify-center text-slate-950 font-bold shadow-md shadow-emerald-500/20">
+          <div className="w-10 h-10 rounded-2xl bg-emerald-500 flex items-center justify-center text-white font-bold shadow-xs">
             <Bot className="w-5 h-5" />
           </div>
           <div>
             <div className="flex items-center gap-1.5">
-              <h3 className="text-sm font-bold text-white">Smart Kitchen AI Grounded Copilot</h3>
-              <span className="text-[10px] px-2 py-0.2 rounded-full bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/30">
+              <h3 className="text-sm font-bold text-slate-800">Kitchen Copilot</h3>
+              <span className="text-[10px] px-2 py-0.2 rounded-full bg-emerald-100 text-emerald-700 font-bold">
                 Live Inventory Connected
               </span>
             </div>
-            <p className="text-xs text-slate-400">Zero-hallucination assistant connected to your pantry and fridge</p>
+            <p className="text-xs text-slate-500">Ask questions about your pantry, fridge, and meal plans</p>
           </div>
         </div>
 
@@ -99,7 +99,7 @@ export const AssistantPage: React.FC<AssistantPageProps> = ({ onSelectRecipeTitl
               {
                 role: 'assistant',
                 content:
-                  'Chat reset! Ask me anything about your current food stock, expiring items, or meal recipes.',
+                  'Chat reset! Ask me anything about your food stock, expiring items, or meal recipes.',
                 suggested_actions: [
                   'What can I cook today?',
                   'What is going to expire soon?',
@@ -108,7 +108,7 @@ export const AssistantPage: React.FC<AssistantPageProps> = ({ onSelectRecipeTitl
               },
             ])
           }
-          className="p-2 rounded-xl text-slate-400 hover:text-slate-200 hover:bg-slate-800 text-xs transition-colors"
+          className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-200 text-xs transition-colors"
           title="Reset chat"
         >
           <RefreshCw className="w-4 h-4" />
@@ -116,7 +116,7 @@ export const AssistantPage: React.FC<AssistantPageProps> = ({ onSelectRecipeTitl
       </div>
 
       {/* Messages Scroll Area */}
-      <div className="flex-1 p-4 md:p-6 overflow-y-auto space-y-4">
+      <div className="flex-1 p-4 md:p-6 overflow-y-auto space-y-4 bg-slate-50/50">
         {messages.map((msg, index) => {
           const isAssistant = msg.role === 'assistant';
           return (
@@ -125,7 +125,7 @@ export const AssistantPage: React.FC<AssistantPageProps> = ({ onSelectRecipeTitl
               className={`flex items-start gap-3 ${isAssistant ? 'justify-start' : 'justify-end'}`}
             >
               {isAssistant && (
-                <div className="w-8 h-8 rounded-xl bg-slate-800 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0 mt-0.5">
+                <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 mt-0.5">
                   <Bot className="w-4 h-4" />
                 </div>
               )}
@@ -133,8 +133,8 @@ export const AssistantPage: React.FC<AssistantPageProps> = ({ onSelectRecipeTitl
               <div
                 className={`max-w-xl rounded-2xl p-4 text-xs leading-relaxed ${
                   isAssistant
-                    ? 'bg-slate-900/90 border border-slate-800 text-slate-200'
-                    : 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-medium shadow-md shadow-emerald-500/10'
+                    ? 'bg-white border border-slate-200 text-slate-800 shadow-2xs'
+                    : 'bg-emerald-600 text-white font-medium shadow-xs'
                 }`}
               >
                 {/* Content formatted with markdown linebreaks */}
@@ -142,14 +142,14 @@ export const AssistantPage: React.FC<AssistantPageProps> = ({ onSelectRecipeTitl
 
                 {/* Referenced live items chips */}
                 {msg.referenced_items && msg.referenced_items.length > 0 && (
-                  <div className="mt-3 pt-2.5 border-t border-slate-800/80 flex items-center gap-1.5 flex-wrap">
+                  <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center gap-1.5 flex-wrap">
                     <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">
                       Referenced Stock:
                     </span>
                     {msg.referenced_items.map((item, idx) => (
                       <span
                         key={idx}
-                        className="px-2 py-0.5 rounded-md bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-[10px] font-medium"
+                        className="px-2 py-0.5 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-800 text-[10px] font-medium"
                       >
                         {item}
                       </span>
@@ -164,16 +164,16 @@ export const AssistantPage: React.FC<AssistantPageProps> = ({ onSelectRecipeTitl
                       <div
                         key={rIdx}
                         onClick={() => onSelectRecipeTitle && onSelectRecipeTitle(rec.title)}
-                        className="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800 hover:border-emerald-500/40 flex items-center justify-between gap-2 transition-all cursor-pointer group"
+                        className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 hover:border-emerald-400 flex items-center justify-between gap-2 transition-all cursor-pointer group"
                       >
                         <div className="flex items-center gap-2">
-                          <ChefHat className="w-4 h-4 text-emerald-400" />
-                          <span className="font-bold text-white group-hover:text-emerald-300 transition-colors">
+                          <ChefHat className="w-4 h-4 text-emerald-600" />
+                          <span className="font-bold text-slate-800 group-hover:text-emerald-700 transition-colors">
                             {rec.title}
                           </span>
                         </div>
                         {rec.score && (
-                          <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-400">
+                          <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-800">
                             {Math.round(rec.score)} pts
                           </span>
                         )}
@@ -184,12 +184,12 @@ export const AssistantPage: React.FC<AssistantPageProps> = ({ onSelectRecipeTitl
 
                 {/* Quick prompt action chips */}
                 {msg.suggested_actions && msg.suggested_actions.length > 0 && (
-                  <div className="mt-3 pt-3 border-t border-slate-800/80 flex flex-wrap gap-1.5">
+                  <div className="mt-3 pt-3 border-t border-slate-100 flex flex-wrap gap-1.5">
                     {msg.suggested_actions.map((act, actIdx) => (
                       <button
                         key={actIdx}
                         onClick={() => handleSendMessage(act)}
-                        className="px-2.5 py-1 rounded-xl bg-slate-800 hover:bg-emerald-500/20 hover:text-emerald-300 hover:border-emerald-500/30 border border-slate-700/60 text-[11px] text-slate-300 font-medium transition-colors cursor-pointer"
+                        className="px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-300 border border-slate-200 text-[11px] text-slate-700 font-medium transition-colors cursor-pointer"
                       >
                         {act}
                       </button>
@@ -199,7 +199,7 @@ export const AssistantPage: React.FC<AssistantPageProps> = ({ onSelectRecipeTitl
               </div>
 
               {!isAssistant && (
-                <div className="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0 mt-0.5">
+                <div className="w-8 h-8 rounded-xl bg-slate-200 text-slate-700 flex items-center justify-center shrink-0 mt-0.5">
                   <User className="w-4 h-4" />
                 </div>
               )}
@@ -208,9 +208,9 @@ export const AssistantPage: React.FC<AssistantPageProps> = ({ onSelectRecipeTitl
         })}
 
         {isLoading && (
-          <div className="flex items-center gap-2 text-xs text-slate-400 italic">
-            <Bot className="w-4 h-4 text-emerald-400 animate-spin" />
-            <span>Scanning live kitchen inventory...</span>
+          <div className="flex items-center gap-2 text-xs text-slate-500 italic">
+            <Bot className="w-4 h-4 text-emerald-600 animate-spin" />
+            <span>Checking kitchen inventory...</span>
           </div>
         )}
 
@@ -218,7 +218,7 @@ export const AssistantPage: React.FC<AssistantPageProps> = ({ onSelectRecipeTitl
       </div>
 
       {/* Input Box */}
-      <div className="p-3 bg-slate-900/90 border-t border-slate-800 shrink-0">
+      <div className="p-3 bg-white border-t border-slate-200 shrink-0">
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -231,12 +231,12 @@ export const AssistantPage: React.FC<AssistantPageProps> = ({ onSelectRecipeTitl
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             placeholder="Ask anything: 'What can I cook with my chicken and tomatoes?'"
-            className="flex-1 px-4 py-3 rounded-2xl bg-slate-950 border border-slate-800 text-white placeholder:text-slate-500 text-xs focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+            className="flex-1 px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-800 placeholder:text-slate-400 text-xs focus:bg-white focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
           />
           <button
             type="submit"
             disabled={isLoading || !inputValue.trim()}
-            className="p-3 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-bold shadow-lg shadow-emerald-500/20 disabled:opacity-40 transition-all cursor-pointer active:scale-95"
+            className="p-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold shadow-xs disabled:opacity-40 transition-all cursor-pointer active:scale-95"
           >
             <Send className="w-4 h-4" />
           </button>

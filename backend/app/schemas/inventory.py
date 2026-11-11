@@ -10,7 +10,7 @@ class InventoryItemBase(BaseModel):
     unit: str = "pieces" # kg, g, L, ml, pieces, packets, bottles, cans, boxes
     storage_location: str = "Refrigerator" # Refrigerator, Freezer, Pantry, Outside
     purchase_date: date = Field(default_factory=date.today)
-    expiry_date: date
+    expiry_date: Optional[date] = None
     image_url: Optional[str] = None
     is_leftover: bool = False
     notes: Optional[str] = None
@@ -51,7 +51,7 @@ class InventoryItemOut(InventoryItemBase):
     id: int
     user_id: int
     status: str
-    days_until_expiry: int
+    days_until_expiry: Optional[int] = None
     created_at: datetime
     updated_at: datetime
     category: Optional[CategoryOut] = None

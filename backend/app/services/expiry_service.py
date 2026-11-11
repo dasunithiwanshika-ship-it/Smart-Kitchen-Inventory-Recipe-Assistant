@@ -1,17 +1,22 @@
 from datetime import date, datetime
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 from sqlalchemy.orm import Session
 from app.config import settings
 from app.models.models import InventoryItem, ItemStatus, Notification, User
 
 class ExpiryService:
     @staticmethod
-    def calculate_days_until_expiry(expiry_date: date) -> int:
+    def calculate_days_until_expiry(expiry_date: Optional[date]) -> Optional[int]:
+        if expiry_date is None:
+            return None
         today = date.today()
         return (expiry_date - today).days
 
     @staticmethod
-    def determine_status(days_until_expiry: int, critical_threshold: int = None, warning_threshold: int = None) -> str:
+    def determine_status(days_until_expiry: Optional[int], critical_threshold: int = None, warning_threshold: int = None) -> str:
+        if days_until_expiry is None:
+            return ItemStatus.FRESH.value
+
         crit = critical_threshold if critical_threshold is not None else settings.EXPIRY_CRITICAL_DAYS
         warn = warning_threshold if warning_threshold is not None else settings.EXPIRY_WARNING_DAYS
 
@@ -53,6 +58,9 @@ class ExpiryService:
             new_status = cls.determine_status(days, warning_threshold=user_warning_days)
             if item.status != new_status:
                 item.status = new_status
+
+            if days is None:
+                continue
 
             # Check if notification already exists for today
             today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)

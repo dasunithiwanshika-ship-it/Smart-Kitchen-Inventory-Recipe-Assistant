@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { Sidebar } from './components/layout/Sidebar';
 import { MobileNav } from './components/layout/MobileNav';
 import { Header } from './components/layout/Header';
 import { AuthModal } from './components/auth/AuthModal';
@@ -12,10 +11,10 @@ import { AnalyticsPage } from './components/analytics/AnalyticsPage';
 import { AssistantPage } from './components/assistant/AssistantPage';
 import { SettingsPage } from './components/settings/SettingsPage';
 import { AddFoodModal } from './components/inventory/AddFoodModal';
-import { BarcodeScannerModal } from './components/inventory/BarcodeScannerModal';
+import { ProductDateScannerModal, ScannedProductPayload } from './components/inventory/ProductDateScannerModal';
 import { AddLeftoverModal } from './components/leftovers/AddLeftoverModal';
 import { api } from './services/api';
-import { InventoryItem, BarcodeLookup, StorageType } from './types';
+import { InventoryItem } from './types';
 
 const MainApp: React.FC = () => {
   const { user, token, isLoading } = useAuth();
@@ -37,7 +36,11 @@ const MainApp: React.FC = () => {
     if (!token) return;
     try {
       const items = await api.getInventory({ sort_by: 'expiry_date_asc' });
-      setUrgentItems(items.filter((i) => i.days_until_expiry <= 3));
+      setUrgentItems(
+        items.filter(
+          (i) => i.expiry_date && i.days_until_expiry !== null && i.days_until_expiry <= 3
+        )
+      );
     } catch (err) {
       console.warn('Failed to fetch urgent items', err);
     }
@@ -55,27 +58,28 @@ const MainApp: React.FC = () => {
     setCurrentTab(tab);
   };
 
-  const handleBarcodeConfirmed = (lookup: BarcodeLookup) => {
+  const handleProductScanned = (payload: ScannedProductPayload) => {
     setScannedInitialData({
-      food_name: lookup.food_name || '',
-      category_id: lookup.category_id,
-      barcode: lookup.barcode,
-      quantity: 1,
-      unit: lookup.default_unit || 'pieces',
-      storage_location: lookup.suggested_storage || 'Refrigerator',
-      typical_shelf_life_days: lookup.typical_shelf_life_days || 7,
-      image_url: lookup.image_url,
+      food_name: payload.food_name,
+      purchase_date: payload.purchase_date,
+      expiry_date: payload.expiry_date,
+      no_expiry_date: payload.no_expiry_date,
+      storage_location: payload.storage_location || 'Refrigerator',
+      notes: payload.notes,
+      image_url: payload.image_url,
     });
     setIsAddFoodModalOpen(true);
   };
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-slate-400">
-        <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-500 flex items-center justify-center animate-pulse mb-3">
-          <span className="text-xl">🍳</span>
+      <div className="min-h-screen bg-[#e9e7df] flex flex-col items-center justify-center text-[#16193a]">
+        <div className="px-6 py-4 rounded-[14px] bg-white flex flex-col items-center">
+          <span className="text-2xl font-semibold tracking-[-0.03em] text-[#141a4a] animate-pulse">
+            olla
+          </span>
+          <p className="text-xs font-medium text-[#16193a]/70 mt-1">Loading your smart kitchen...</p>
         </div>
-        <p className="text-xs font-semibold">Initializing Smart Kitchen AI...</p>
       </div>
     );
   }
@@ -85,94 +89,108 @@ const MainApp: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col md:flex-row pb-20 md:pb-0">
-      {/* Desktop Sidebar */}
-      <Sidebar
+    <div className="min-h-screen bg-[#e9e7df] text-[#16193a] pb-24 lg:pb-12">
+      {/* Floating olla Top Navigation */}
+      <Header
         currentTab={currentTab}
         setCurrentTab={setCurrentTab}
-        urgentCount={urgentItems.length}
+        onAddFoodClick={() => {
+          setScannedInitialData(null);
+          setIsAddFoodModalOpen(true);
+        }}
+        onOpenScanner={() => setIsScannerModalOpen(true)}
+        onOpenAddLeftover={() => setIsAddLeftoverModalOpen(true)}
+        urgentItems={urgentItems}
       />
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Top Header */}
-        <Header
-          currentTab={currentTab}
-          onAddFoodClick={() => {
-            setScannedInitialData(null);
-            setIsAddFoodModalOpen(true);
-          }}
-          urgentItems={urgentItems}
-        />
+      {/* Main Content Container matching olla's 87vw frame */}
+      <main className="pt-[84px] md:pt-[calc(1.6vh+54px+1.6vw)] w-[calc(100vw-24px)] md:w-[87vw] mx-auto">
+        {currentTab === 'dashboard' && (
+          <DashboardPage
+            onNavigateToTab={handleNavigateToTab}
+            onOpenScanner={() => setIsScannerModalOpen(true)}
+            onOpenAddFood={() => {
+              setScannedInitialData(null);
+              setIsAddFoodModalOpen(true);
+            }}
+            onOpenAddLeftover={() => setIsAddLeftoverModalOpen(true)}
+          />
+        )}
 
-        {/* Page Views */}
-        <main className="flex-1 p-4 md:p-8 max-w-7xl mx-auto w-full">
-          {currentTab === 'dashboard' && (
-            <DashboardPage
-              onNavigateToTab={handleNavigateToTab}
-              onOpenScanner={() => setIsScannerModalOpen(true)}
-              onOpenAddFood={() => {
-                setScannedInitialData(null);
-                setIsAddFoodModalOpen(true);
-              }}
-              onOpenAddLeftover={() => setIsAddLeftoverModalOpen(true)}
-            />
-          )}
-
-          {currentTab === 'inventory' && (
+        {currentTab === 'inventory' && (
+          <div className="bg-white rounded-[14px] p-4 sm:p-6">
             <InventoryPage
               initialStorage={inventoryStorageFilter}
               initialStatus={inventoryStatusFilter}
               onOpenScanner={() => setIsScannerModalOpen(true)}
             />
-          )}
+          </div>
+        )}
 
-          {currentTab === 'scan' && (
-            <div className="py-6">
-              <BarcodeScannerModal
-                isOpen={true}
-                onClose={() => setCurrentTab('inventory')}
-                onProductConfirmed={handleBarcodeConfirmed}
-              />
-            </div>
-          )}
+        {currentTab === 'scan' && (
+          <div className="bg-white rounded-[14px] p-4 sm:p-6 max-w-2xl mx-auto">
+            <ProductDateScannerModal
+              isOpen={true}
+              onClose={() => setCurrentTab('inventory')}
+              onProductScanned={handleProductScanned}
+              onOpenManualEntry={() => {
+                setCurrentTab('inventory');
+                setScannedInitialData(null);
+                setIsAddFoodModalOpen(true);
+              }}
+            />
+          </div>
+        )}
 
-          {currentTab === 'recipes' && (
+        {currentTab === 'recipes' && (
+          <div className="bg-white rounded-[14px] p-4 sm:p-6">
             <RecipesPage initialSearchQuery={recipeSearchQuery} />
-          )}
+          </div>
+        )}
 
-          {currentTab === 'leftovers' && (
+        {currentTab === 'leftovers' && (
+          <div className="bg-white rounded-[14px] p-4 sm:p-6">
             <LeftoversPage
               onFindRecipesForLeftover={(loName) => {
                 setRecipeSearchQuery(loName);
                 setCurrentTab('recipes');
               }}
             />
-          )}
+          </div>
+        )}
 
-          {currentTab === 'analytics' && <AnalyticsPage />}
+        {currentTab === 'analytics' && (
+          <div className="bg-white rounded-[14px] p-4 sm:p-6">
+            <AnalyticsPage />
+          </div>
+        )}
 
-          {currentTab === 'assistant' && (
+        {currentTab === 'assistant' && (
+          <div className="bg-white rounded-[14px] p-4 sm:p-6">
             <AssistantPage
               onSelectRecipeTitle={(title) => {
                 setRecipeSearchQuery(title);
                 setCurrentTab('recipes');
               }}
             />
-          )}
+          </div>
+        )}
 
-          {currentTab === 'settings' && <SettingsPage />}
-        </main>
-      </div>
+        {currentTab === 'settings' && (
+          <div className="bg-white rounded-[14px] p-4 sm:p-6">
+            <SettingsPage />
+          </div>
+        )}
+      </main>
 
-      {/* Mobile Bottom Bar */}
+      {/* Mobile Bottom Navigation */}
       <MobileNav
         currentTab={currentTab}
         setCurrentTab={setCurrentTab}
         urgentCount={urgentItems.length}
       />
 
-      {/* Global Modals */}
+      {/* Global Add & Edit Modals */}
       <AddFoodModal
         isOpen={isAddFoodModalOpen}
         onClose={() => {
@@ -183,10 +201,15 @@ const MainApp: React.FC = () => {
         initialData={scannedInitialData}
       />
 
-      <BarcodeScannerModal
+      <ProductDateScannerModal
         isOpen={isScannerModalOpen}
         onClose={() => setIsScannerModalOpen(false)}
-        onProductConfirmed={handleBarcodeConfirmed}
+        onProductScanned={handleProductScanned}
+        onOpenManualEntry={() => {
+          setIsScannerModalOpen(false);
+          setScannedInitialData(null);
+          setIsAddFoodModalOpen(true);
+        }}
       />
 
       <AddLeftoverModal

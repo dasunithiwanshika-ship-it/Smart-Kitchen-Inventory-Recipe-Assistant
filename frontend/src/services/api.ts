@@ -6,6 +6,7 @@ import {
   Leftover,
   Recipe,
   RecipeRecommendation,
+  CookRecipeResponse,
   BarcodeLookup,
   WasteAnalytics,
   WasteRiskPredictions,
@@ -200,6 +201,15 @@ class ApiClient {
 
   async getRecipe(id: number): Promise<Recipe> {
     return this.request<Recipe>(`/recipes/${id}`);
+  }
+
+  async cookRecipe(recipeId: number, ingredientIds?: number[]): Promise<CookRecipeResponse> {
+    return this.request<CookRecipeResponse>(`/recipes/${recipeId}/cook`, {
+      method: 'POST',
+      body: JSON.stringify(
+        ingredientIds !== undefined ? { ingredient_ids: ingredientIds } : {}
+      ),
+    });
   }
 
   // Barcode Scanning Endpoints

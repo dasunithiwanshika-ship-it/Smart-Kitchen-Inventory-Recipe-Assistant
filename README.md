@@ -6,21 +6,21 @@ Smart Kitchen AI is a production-grade application designed to eliminate househo
 
 ---
 
-## ✨ Key Features
+##  Key Features
 
-- 📊 **Smart Dashboard**: Real-time overview of pantry, fridge, and freezer inventory, active leftovers, and urgency countdown alerts.
-- 📷 **Barcode Scanner**: Integrated camera barcode scanner powered by `html5-qrcode` and real-time OpenFoodFacts API auto-fill.
-- ✍️ **Rapid Manual Entry**: Add groceries in under 10 seconds with category chips and expiry presets.
-- ⚠️ **Expiry Engine & Warnings**: Dynamic status tagging (🔴 Expired, 🔴 Critical 0-1d, 🟠 Expiring Soon 2-3d, 🟢 Fresh).
-- 🍛 **Leftovers Management**: Separate tracking for prepared meals with use-by countdowns and repurposing links.
-- 🤖 **AI Recipe Recommendation Engine**: Mathematical multi-factor scoring algorithm that prioritizes meals rescuing expiring ingredients.
-- 💬 **AI Kitchen Copilot**: Conversational assistant grounded in your live kitchen inventory to guarantee zero hallucinations.
-- 📈 **Food Waste Analytics & ML Predictions**: Visual breakdown of consumed vs wasted food, estimated financial savings, and ML waste risk estimations.
-- 🔒 **Enterprise-Grade Security**: Stateless JWT Bearer auth, bcrypt password hashing, input validation, and user data isolation.
+- **Smart Dashboard**: Real-time overview of pantry, fridge, and freezer inventory, active leftovers, and urgency countdown alerts.
+- **Barcode Scanner**: Integrated camera barcode scanner powered by `html5-qrcode` and real-time OpenFoodFacts API auto-fill.
+- **Rapid Manual Entry**: Add groceries in under 10 seconds with category chips and expiry presets.
+- **Expiry Engine & Warnings**: Dynamic status tagging (🔴 Expired, 🔴 Critical 0-1d, 🟠 Expiring Soon 2-3d, 🟢 Fresh).
+- **Leftovers Management**: Separate tracking for prepared meals with use-by countdowns and repurposing links.
+-  **AI Recipe Recommendation Engine**: Mathematical multi-factor scoring algorithm that prioritizes meals rescuing expiring ingredients.
+- **AI Kitchen Copilot**: Conversational assistant grounded in your live kitchen inventory to guarantee zero hallucinations.
+- **Food Waste Analytics & ML Predictions**: Visual breakdown of consumed vs wasted food, estimated financial savings, and ML waste risk estimations.
+- **Enterprise-Grade Security**: Stateless JWT Bearer auth, bcrypt password hashing, input validation, and user data isolation.
 
 ---
 
-## 🛠️ Technology Stack
+## Technology Stack
 
 - **Frontend**: React 19, TypeScript, Vite, Tailwind CSS, Lucide Icons, Canvas Confetti, HTML5-QRCode
 - **Backend**: Python 3.13, FastAPI, SQLAlchemy 2.0, Pydantic v2, Scikit-Learn, Pandas, NumPy, Bcrypt, Pytest
@@ -28,7 +28,7 @@ Smart Kitchen AI is a production-grade application designed to eliminate househo
 
 ---
 
-## 🚀 Quick Start Guide
+## Quick Start Guide
 
 ### 1. Backend Setup
 
@@ -118,7 +118,7 @@ backend\venv\Scripts\pytest backend/tests -v
 
 ---
 
-## 📄 Documentation
+## Documentation
 
 - [System Architecture](docs/architecture.md)
 - [Database Schema & ERD](docs/database-schema.md)

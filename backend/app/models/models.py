@@ -87,7 +87,7 @@ class InventoryItem(Base):
     unit = Column(String(50), nullable=False, default="pieces") # kg, g, L, ml, pieces, packets, bottles, cans, boxes
     storage_location = Column(String(50), nullable=False, default=StorageType.REFRIGERATOR.value) # Refrigerator, Freezer, Pantry, Outside
     purchase_date = Column(Date, default=date.today, nullable=False)
-    expiry_date = Column(Date, nullable=False, index=True)
+    expiry_date = Column(Date, nullable=True, index=True)
     image_url = Column(String(500), nullable=True)
     is_leftover = Column(Boolean, default=False)
     notes = Column(Text, nullable=True)

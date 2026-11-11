@@ -56,7 +56,7 @@ class InventoryService:
 
         # Sorting
         if sort_by == "expiry_date_asc":
-            enriched_items.sort(key=lambda x: x.expiry_date)
+            enriched_items.sort(key=lambda x: (x.expiry_date is None, x.expiry_date or date.max))
         elif sort_by == "name_asc":
             enriched_items.sort(key=lambda x: x.food_name.lower())
         elif sort_by == "quantity_desc":
@@ -115,7 +115,7 @@ class InventoryService:
         for field, value in update_data.items():
             setattr(db_item, field, value)
 
-        if "expiry_date" in update_data and db_item.expiry_date:
+        if "expiry_date" in update_data:
             days = ExpiryService.calculate_days_until_expiry(db_item.expiry_date)
             db_item.status = ExpiryService.determine_status(days)
 

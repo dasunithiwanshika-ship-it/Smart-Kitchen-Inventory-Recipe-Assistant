@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Plus, Calendar, Sparkles, Package, MapPin, Tag, Hash, FileText } from 'lucide-react';
+import { X, Plus, Sparkles, Calendar, Tag, FileText, CheckCircle2 } from 'lucide-react';
 import { StorageType, Category } from '../../types';
 import { api } from '../../services/api';
 
@@ -14,8 +14,11 @@ interface AddFoodModalProps {
     quantity?: number;
     unit?: string;
     storage_location?: StorageType;
-    typical_shelf_life_days?: number;
+    purchase_date?: string;
+    expiry_date?: string | null;
+    no_expiry_date?: boolean;
     image_url?: string;
+    notes?: string;
   };
 }
 
@@ -32,6 +35,7 @@ export const AddFoodModal: React.FC<AddFoodModalProps> = ({
   const [storageLocation, setStorageLocation] = useState<StorageType>('Refrigerator');
   const [purchaseDate, setPurchaseDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [expiryDate, setExpiryDate] = useState<string>('');
+  const [noExpiryDate, setNoExpiryDate] = useState<boolean>(false);
   const [notes, setNotes] = useState<string>('');
   const [imageUrl, setImageUrl] = useState<string>('');
   const [barcode, setBarcode] = useState<string>('');
@@ -64,7 +68,6 @@ export const AddFoodModal: React.FC<AddFoodModalProps> = ({
     }
   }, [isOpen]);
 
-  // Set default expiry date based on shelf life
   useEffect(() => {
     if (isOpen) {
       if (initialData) {
@@ -75,13 +78,21 @@ export const AddFoodModal: React.FC<AddFoodModalProps> = ({
         setUnit(initialData.unit || 'pieces');
         setStorageLocation(initialData.storage_location || 'Refrigerator');
         setImageUrl(initialData.image_url || '');
+        setPurchaseDate(initialData.purchase_date || new Date().toISOString().split('T')[0]);
+        setNotes(initialData.notes || '');
 
-        const shelfLife = initialData.typical_shelf_life_days || 7;
-        const defaultExpiry = new Date();
-        defaultExpiry.setDate(defaultExpiry.getDate() + shelfLife);
-        setExpiryDate(defaultExpiry.toISOString().split('T')[0]);
+        if (initialData.no_expiry_date || initialData.expiry_date === null) {
+          setNoExpiryDate(true);
+          setExpiryDate('');
+        } else if (initialData.expiry_date) {
+          setNoExpiryDate(false);
+          setExpiryDate(initialData.expiry_date);
+        } else {
+          setNoExpiryDate(false);
+          setExpiryDate('');
+        }
       } else {
-        // Defaults
+        // Defaults for pure manual entry
         setFoodName('');
         setCategoryId(undefined);
         setBarcode('');
@@ -91,10 +102,8 @@ export const AddFoodModal: React.FC<AddFoodModalProps> = ({
         setNotes('');
         setImageUrl('');
         setPurchaseDate(new Date().toISOString().split('T')[0]);
-
-        const defaultExpiry = new Date();
-        defaultExpiry.setDate(defaultExpiry.getDate() + 7);
-        setExpiryDate(defaultExpiry.toISOString().split('T')[0]);
+        setExpiryDate('');
+        setNoExpiryDate(false);
       }
       setError(null);
     }
@@ -104,16 +113,13 @@ export const AddFoodModal: React.FC<AddFoodModalProps> = ({
     const d = new Date();
     d.setDate(d.getDate() + days);
     setExpiryDate(d.toISOString().split('T')[0]);
+    setNoExpiryDate(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!foodName.trim()) {
-      setError('Please enter a food name.');
-      return;
-    }
-    if (!expiryDate) {
-      setError('Please select an expiry date.');
+      setError('Please enter a product name.');
       return;
     }
     if (quantity <= 0) {
@@ -132,8 +138,8 @@ export const AddFoodModal: React.FC<AddFoodModalProps> = ({
         quantity: Number(quantity),
         unit,
         storage_location: storageLocation,
-        purchase_date: purchaseDate,
-        expiry_date: expiryDate,
+        purchase_date: purchaseDate || new Date().toISOString().split('T')[0],
+        expiry_date: noExpiryDate ? undefined : expiryDate || undefined,
         notes: notes.trim() || undefined,
         image_url: imageUrl.trim() || undefined,
       });
@@ -150,29 +156,31 @@ export const AddFoodModal: React.FC<AddFoodModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="glass-panel w-full max-w-lg rounded-3xl border border-slate-700/60 shadow-2xl p-6 relative max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="bg-white w-full max-w-lg rounded-2xl border border-slate-200 shadow-2xl p-5 sm:p-6 relative max-h-[92vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between pb-4 border-b border-slate-800">
-          <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+        <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-xl bg-emerald-50 text-emerald-600">
               <Plus className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-white">Add Food Item</h3>
-              <p className="text-xs text-slate-400">Quick 10-second kitchen logging</p>
+              <h3 className="text-lg font-bold text-slate-800 tracking-tight">Add Food Item</h3>
+              <p className="text-xs text-slate-500">
+                Log packaged groceries or fresh unpackaged produce
+              </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {error && (
-          <div className="mt-4 p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs">
+          <div className="mt-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs">
             {error}
           </div>
         )}
@@ -181,28 +189,28 @@ export const AddFoodModal: React.FC<AddFoodModalProps> = ({
         <form onSubmit={handleSubmit} className="mt-4 space-y-4">
           {/* Food Name */}
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">Food Name *</label>
-            <div className="relative">
-              <input
-                type="text"
-                required
-                value={foodName}
-                onChange={(e) => setFoodName(e.target.value)}
-                placeholder="e.g., Organic Milk, Fresh Spinach, Chicken"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700/80 text-white placeholder:text-slate-500 text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
-              />
-            </div>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">
+              Food / Product Name *
+            </label>
+            <input
+              type="text"
+              required
+              value={foodName}
+              onChange={(e) => setFoodName(e.target.value)}
+              placeholder="e.g., Potatoes, Greek Yogurt, Red Onions, Fresh Milk"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 placeholder:text-slate-400 text-sm focus:bg-white focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all"
+            />
           </div>
 
           {/* Quantity and Unit */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">Quantity *</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Quantity *</label>
               <div className="flex items-center">
                 <button
                   type="button"
                   onClick={() => setQuantity(Math.max(0.5, quantity - 0.5))}
-                  className="px-3 py-2.5 rounded-l-xl bg-slate-800 text-slate-300 hover:bg-slate-700 font-bold border-y border-l border-slate-700/80"
+                  className="px-3 py-2.5 rounded-l-xl bg-slate-100 text-slate-700 hover:bg-slate-200 font-bold border-y border-l border-slate-200"
                 >
                   -
                 </button>
@@ -213,12 +221,12 @@ export const AddFoodModal: React.FC<AddFoodModalProps> = ({
                   required
                   value={quantity}
                   onChange={(e) => setQuantity(parseFloat(e.target.value) || 0)}
-                  className="w-full py-2.5 bg-slate-900 border-y border-slate-700/80 text-white text-center text-sm font-semibold focus:outline-none"
+                  className="w-full py-2.5 bg-slate-50 border-y border-slate-200 text-slate-900 text-center text-sm font-semibold focus:outline-none"
                 />
                 <button
                   type="button"
                   onClick={() => setQuantity(quantity + 0.5)}
-                  className="px-3 py-2.5 rounded-r-xl bg-slate-800 text-slate-300 hover:bg-slate-700 font-bold border-y border-r border-slate-700/80"
+                  className="px-3 py-2.5 rounded-r-xl bg-slate-100 text-slate-700 hover:bg-slate-200 font-bold border-y border-r border-slate-200"
                 >
                   +
                 </button>
@@ -226,14 +234,14 @@ export const AddFoodModal: React.FC<AddFoodModalProps> = ({
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">Unit</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Unit</label>
               <select
                 value={unit}
                 onChange={(e) => setUnit(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-700/80 text-white text-sm focus:outline-none focus:border-emerald-500"
+                className="w-full px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-800 text-sm focus:bg-white focus:outline-none focus:border-emerald-500"
               >
                 {unitsList.map((u) => (
-                  <option key={u} value={u} className="bg-slate-900">
+                  <option key={u} value={u}>
                     {u}
                   </option>
                 ))}
@@ -243,7 +251,9 @@ export const AddFoodModal: React.FC<AddFoodModalProps> = ({
 
           {/* Storage Location */}
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1.5">Storage Location</label>
+            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              Storage Location
+            </label>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {storageList.map((loc) => (
                 <button
@@ -252,8 +262,8 @@ export const AddFoodModal: React.FC<AddFoodModalProps> = ({
                   onClick={() => setStorageLocation(loc.id)}
                   className={`py-2 px-2.5 rounded-xl border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
                     storageLocation === loc.id
-                      ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300 shadow-sm'
-                      : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                      ? 'bg-emerald-50 border-emerald-500 text-emerald-700 shadow-sm'
+                      : 'bg-slate-50 border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                   }`}
                 >
                   <span>{loc.icon}</span>
@@ -263,62 +273,101 @@ export const AddFoodModal: React.FC<AddFoodModalProps> = ({
             </div>
           </div>
 
-          {/* Expiry Date with quick presets */}
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="text-xs font-semibold text-slate-300">Expiry Date *</label>
-              <div className="flex items-center gap-1 text-[11px]">
-                <button
-                  type="button"
-                  onClick={() => setPresetExpiry(3)}
-                  className="px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 hover:text-emerald-400"
-                >
-                  +3d
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPresetExpiry(7)}
-                  className="px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 hover:text-emerald-400"
-                >
-                  +1w
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPresetExpiry(14)}
-                  className="px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 hover:text-emerald-400"
-                >
-                  +2w
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPresetExpiry(30)}
-                  className="px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 hover:text-emerald-400"
-                >
-                  +1m
-                </button>
+          {/* Dates Section: Purchase Date & Expiry Date */}
+          <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* Purchase / MFD Date */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Purchase / Mfg Date
+                </label>
+                <input
+                  type="date"
+                  value={purchaseDate}
+                  onChange={(e) => setPurchaseDate(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-800 text-xs focus:outline-none focus:border-emerald-500"
+                />
+              </div>
+
+              {/* Expiry Date */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-xs font-semibold text-slate-700">
+                    Expiry / Use-By Date
+                  </label>
+                  {!noExpiryDate && (
+                    <div className="flex items-center gap-1 text-[10px]">
+                      <button
+                        type="button"
+                        onClick={() => setPresetExpiry(3)}
+                        className="px-1.5 py-0.5 rounded bg-white border border-slate-200 text-slate-600 hover:text-emerald-600 hover:border-emerald-300"
+                      >
+                        +3d
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPresetExpiry(7)}
+                        className="px-1.5 py-0.5 rounded bg-white border border-slate-200 text-slate-600 hover:text-emerald-600 hover:border-emerald-300"
+                      >
+                        +1w
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPresetExpiry(14)}
+                        className="px-1.5 py-0.5 rounded bg-white border border-slate-200 text-slate-600 hover:text-emerald-600 hover:border-emerald-300"
+                      >
+                        +2w
+                      </button>
+                    </div>
+                  )}
+                </div>
+                <input
+                  type="date"
+                  disabled={noExpiryDate}
+                  value={expiryDate}
+                  onChange={(e) => {
+                    setExpiryDate(e.target.value);
+                    if (e.target.value) setNoExpiryDate(false);
+                  }}
+                  className={`w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-800 text-xs focus:outline-none focus:border-emerald-500 ${
+                    noExpiryDate ? 'opacity-40 bg-slate-100 cursor-not-allowed' : ''
+                  }`}
+                />
               </div>
             </div>
-            <input
-              type="date"
-              required
-              value={expiryDate}
-              onChange={(e) => setExpiryDate(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700/80 text-white text-sm focus:outline-none focus:border-emerald-500"
-            />
+
+            {/* "No expiry date" Checkbox */}
+            <div className="flex items-center gap-2 pt-1 border-t border-slate-200">
+              <input
+                type="checkbox"
+                id="modalNoExpiry"
+                checked={noExpiryDate}
+                onChange={(e) => {
+                  setNoExpiryDate(e.target.checked);
+                  if (e.target.checked) setExpiryDate('');
+                }}
+                className="w-4 h-4 rounded text-emerald-600 accent-emerald-500 cursor-pointer"
+              />
+              <label htmlFor="modalNoExpiry" className="text-xs text-slate-700 font-medium cursor-pointer">
+                No printed expiry date (e.g. potatoes, onions, fresh unpackaged produce)
+              </label>
+            </div>
           </div>
 
           {/* Category */}
           {categories.length > 0 && (
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">Category</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Category (Optional)
+              </label>
               <select
                 value={categoryId || ''}
                 onChange={(e) => setCategoryId(e.target.value ? Number(e.target.value) : undefined)}
-                className="w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-700/80 text-white text-sm focus:outline-none focus:border-emerald-500"
+                className="w-full px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-800 text-sm focus:bg-white focus:outline-none focus:border-emerald-500"
               >
                 <option value="">Select Category (Optional)</option>
                 {categories.map((c) => (
-                  <option key={c.id} value={c.id} className="bg-slate-900">
+                  <option key={c.id} value={c.id}>
                     {c.name}
                   </option>
                 ))}
@@ -328,29 +377,31 @@ export const AddFoodModal: React.FC<AddFoodModalProps> = ({
 
           {/* Notes */}
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">Notes (Optional)</label>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">
+              Notes (Optional)
+            </label>
             <input
               type="text"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="e.g., Organic, store in airtight jar, open bottle"
-              className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700/80 text-white placeholder:text-slate-500 text-xs focus:outline-none focus:border-emerald-500"
+              placeholder="e.g., Kept in vegetable basket, opened, store dry"
+              className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-800 placeholder:text-slate-400 text-xs focus:bg-white focus:outline-none focus:border-emerald-500"
             />
           </div>
 
           {/* Action Buttons */}
-          <div className="pt-3 flex items-center justify-end gap-3 border-t border-slate-800">
+          <div className="pt-3 flex items-center justify-end gap-3 border-t border-slate-100">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs transition-colors"
+              className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-bold text-xs shadow-lg shadow-emerald-500/20 active:scale-95 transition-all disabled:opacity-50"
+              className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs shadow-md shadow-emerald-500/20 active:scale-95 transition-all disabled:opacity-50 cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               <span>{isSubmitting ? 'Saving...' : 'Save to Inventory'}</span>

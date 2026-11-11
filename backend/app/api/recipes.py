@@ -3,7 +3,7 @@ from typing import List, Optional
 from sqlalchemy.orm import Session
 from app.database.session import get_db
 from app.models.models import User, Recipe
-from app.schemas.recipe import RecipeOut, RecipeRecommendationOut
+from app.schemas.recipe import RecipeOut, RecipeRecommendationOut, CookRecipeRequest, CookRecipeResponse
 from app.services.recipe_service import RecipeService
 from app.services.auth_service import get_current_user
 
@@ -38,3 +38,21 @@ def get_recipe_details(recipe_id: int, db: Session = Depends(get_db)):
     if not recipe:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Recipe not found.")
     return recipe
+
+
+@router.post("/{recipe_id}/cook", response_model=CookRecipeResponse)
+def cook_recipe(
+    recipe_id: int,
+    payload: Optional[CookRecipeRequest] = None,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    result = RecipeService.cook_recipe(
+        db=db,
+        user_id=current_user.id,
+        recipe_id=recipe_id,
+        ingredient_ids=payload.ingredient_ids if payload else None,
+    )
+    if not result:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Recipe not found.")
+    return result

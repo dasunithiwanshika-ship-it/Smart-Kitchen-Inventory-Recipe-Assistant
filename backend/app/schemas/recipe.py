@@ -41,3 +41,23 @@ class RecipeRecommendationOut(RecipeOut):
     leftovers_used: List[str]
     recommendation_score: float
     recommendation_reason: str
+
+
+class CookRecipeRequest(BaseModel):
+    ingredient_ids: Optional[List[int]] = None
+
+
+class CookedIngredientResult(BaseModel):
+    inventory_item_id: int
+    food_name: str
+    deducted_quantity: float
+    remaining_quantity: float
+    unit: str
+    fully_consumed: bool
+
+
+class CookRecipeResponse(BaseModel):
+    recipe_id: int
+    recipe_title: str
+    consumed_items: List[CookedIngredientResult]
+    message: str
